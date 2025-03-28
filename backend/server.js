@@ -4,6 +4,8 @@ const mongoose = require("mongoose")
 const cors = require("cors");
 require("dotenv").config();
 
+const attendanceRoutes = require("./routes/attendanceRoutes");
+const activityRoutes = require("./routes/activityRoutes");
 const adminLoginRoute = require("./routes/authRoutes/adminLogin");
 const adminSignupRoute = require('./routes/authRoutes/adminSignup');
 const adminDashboardRoute = require('./routes/adminRoutes/adminDashboard');
@@ -56,6 +58,8 @@ app.get("/ping", (req, res) => {
     });
 });
 
+app.use("/api/attendance", attendanceRoutes);
+app.use("/api/activity", activityRoutes);
 app.use("/api/auth/admin/login", adminLoginRoute);
 app.use("/api/auth/admin/signup", adminSignupRoute);
 app.use("/api/auth/employee/login", employeeLoginRoute);

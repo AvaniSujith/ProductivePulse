@@ -77,7 +77,7 @@ const authenticateUser = async (req, res, next) => {
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
 
-            console.warn('Unauthorised access sunce no token is provided');
+            console.warn('Unauthorised access since no token is provided');
 
             return res.status(401).json({ message: 'Unauthorized: No token provided' });
         }
@@ -89,7 +89,19 @@ const authenticateUser = async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         console.log("decoded token:", decoded);
 
-        let user = await Employee.findById(decoded.id) || await Admin.findById(decoded.id);
+        // let user = await Employee.findById(decoded.id) || await Admin.findById(decoded.id);
+
+        const [ employeeResult, adminResult ] = await Promise.allSettled([
+            Employee.findById(decoded.id),
+            Admin.findById(decoded.id),
+        ]);
+
+
+        const user = employeeResult.status === 'fulfilled' && employeeResult.value
+            ? employeeResult.value
+            : adminResult.status === 'fulfilled' && adminResult.value
+            ? adminResult.value
+            : null;
 
         if (!user) {
             console.warn("User not found")
@@ -107,7 +119,7 @@ const authenticateUser = async (req, res, next) => {
         next();
 
     } catch (error) {
-        console.error('authentication error',  error)
+        console.error('authentication error', error.message || error)
         res.status(401).json({ message: 'Unauthorized: Invalid token' });
     }
 };

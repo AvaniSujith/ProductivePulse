@@ -16,21 +16,55 @@ const AttendanceSchema = new mongoose.Schema({
     },
     status:{
         type: String,
-        enum: ['Present', 'Absent', 'Working', 'away'],
-        default:'Present',
+        enum: ['Checked-In', 'Checked-Out', 'Absent', 'On Break'],
+        default:'Absent',
     },
-    checkInTime: {
-        type: Date,
-        // required: function() { return this.status === 'Present'; },
-        default: function() {
-            return this.status === "Present" ? new Date() : null;
-        }, 
-    },
-    checkOutTime: {
-        type: Date,
-        // required: function() { return this.status === "Present"; },  
-        default: null, 
-    }, 
+    // checkInTime: {
+    //     type: Date,
+    //     // required: function() { return this.status === 'Present'; },
+    //     // default: function() {
+    //     //     return this.status === "Present" ? new Date() : null;
+    //     // }, 
+    //     // default: null,
+    // },
+    // checkOutTime: {
+    //     type: Date,
+    //     // required: function() { return this.status === "Present"; },  
+    //     default: null, 
+    //     validate: {
+    //         validator: function (value){
+    //             // return !this.checkInTime || value >= this.checkInTime;
+    //             return !value || value >= this.checkInTime;
+    //         },
+    //         message: "Check-out time must be after check-in time",
+    //     },
+    // }, 
+
+    sessions: [
+        {
+            checkInTime: { type: Date, required: true },
+            checkOutTime: {
+                type: Date,
+                default: null,
+                validate: {
+                    validator: function (value){
+                        return !value || value >= this.checkInTime;
+                    },
+                    message: "Check out time must be after check in time"
+                }
+            }
+        }
+    ],
+    breaks: [
+        {
+            type: {
+                type: String,
+                enum: ['Lunch', 'Dinner', 'Tea', 'Short Break'],
+            },
+            startTime: Date,
+            endTime: Date,
+        }
+    ]
 },
 {
     timestamps: true,
