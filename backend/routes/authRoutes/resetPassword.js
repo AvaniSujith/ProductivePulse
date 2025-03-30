@@ -14,10 +14,10 @@ router.post('/:token', async (req, res) => {
             return res.status(400).json({ message: 'Password must be 8 char long'});
         }
 
+
         if(newPassword !== confirmPassword){
             return res.status(400).json({ message: 'Passwords do not match' })
         }
-
         // const admin = await Admin.findOne({
         //     resetPasswordToken: token,
         //     resetPasswordExpires: { $gt: Date.now() }
