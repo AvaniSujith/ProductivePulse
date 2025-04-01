@@ -67,70 +67,112 @@
 // };
 
 
+// const jwt = require('jsonwebtoken');
+// const Employee = require('../models/Employee');
+// const Admin = require('../models/Admin');
+
+// const authenticateUser = async (req, res, next) => {
+//     try {
+//         const authHeader = req.header('Authorization');
+
+//         if (!authHeader || !authHeader.startsWith('Bearer ')) {
+
+//             console.warn('Unauthorised access since no token is provided');
+
+//             return res.status(401).json({ message: 'Unauthorized: No token provided' });
+//         }
+
+//         const token = authHeader.split(' ')[1];
+//         console.log('Recieved token:', token);
+
+
+//         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//         console.log("decoded token:", decoded);
+
+//         // let user = await Employee.findById(decoded.id) || await Admin.findById(decoded.id);
+
+//         const [ employeeResult, adminResult ] = await Promise.allSettled([
+//             Employee.findById(decoded.id),
+//             Admin.findById(decoded.id),
+//         ]);
+
+
+//         const user = employeeResult.status === 'fulfilled' && employeeResult.value
+//             ? employeeResult.value
+//             : adminResult.status === 'fulfilled' && adminResult.value
+//             ? adminResult.value
+//             : null;
+
+//         if (!user) {
+//             console.warn("User not found")
+//             return res.status(401).json({ message: 'Unauthorized: Invalid user' });
+//         }
+
+//         if(user.status !== 'active'){
+//             console.warn('Inactive account');
+//             return res.status(403).json({ message: 'Account not active'})
+//         }
+
+//         req.user = user;
+//         req.userType = user.role;
+
+//         next();
+
+//     } catch (error) {
+//         console.error('authentication error', error.message || error)
+//         res.status(401).json({ message: 'Unauthorized: Invalid token' });
+//     }
+// };
+
+// const requireAdmin = (req, res, next) => {
+
+//     if (!req.user || !['Admin', 'superadmin'].includes(req.user.role)) {
+//         console.warn("Access denied")
+//         return res.status(403).json({ message: 'Access denied: Admin rights required' });
+//     }
+//     next();
+// }; 
+
+// module.exports = { authenticateUser, requireAdmin }; 
+
+
+
 const jwt = require('jsonwebtoken');
 const Employee = require('../models/Employee');
 const Admin = require('../models/Admin');
+const dotenv = require('dotenv');
+const { request, response } = require('express');
+dotenv.config();
 
-const authenticateUser = async (req, res, next) => {
-    try {
-        const authHeader = req.header('Authorization');
-
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-
-            console.warn('Unauthorised access since no token is provided');
-
-            return res.status(401).json({ message: 'Unauthorized: No token provided' });
+const authenticateUser = async (request, response, next) => {
+    try{
+        const authHeader = request.header('Authorization');
+        if(!authHeader || !authHeader.startsWith('Bearer ')){
+            return response.status(401).json({ message: 'No token, authorization denied' });
         }
 
-        const token = authHeader.split(' ')[1];
-        console.log('Recieved token:', token);
-
+        const token = authHeader.split(' ')[1].trim();
+        if(!token){
+            return response.status(401).json({message: 'Token missing, authorization denied'});
+        }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        console.log("decoded token:", decoded);
-
-        // let user = await Employee.findById(decoded.id) || await Admin.findById(decoded.id);
-
-        const [ employeeResult, adminResult ] = await Promise.allSettled([
-            Employee.findById(decoded.id),
-            Admin.findById(decoded.id),
-        ]);
-
-
-        const user = employeeResult.status === 'fulfilled' && employeeResult.value
-            ? employeeResult.value
-            : adminResult.status === 'fulfilled' && adminResult.value
-            ? adminResult.value
-            : null;
-
-        if (!user) {
-            console.warn("User not found")
-            return res.status(401).json({ message: 'Unauthorized: Invalid user' });
-        }
-
-        if(user.status !== 'active'){
-            console.warn('Inactive account');
-            return res.status(403).json({ message: 'Account not active'})
-        }
-
-        req.user = user;
-        req.userType = user.role;
-
+        request.user = decoded;
         next();
-
-    } catch (error) {
-        console.error('authentication error', error.message || error)
-        res.status(401).json({ message: 'Unauthorized: Invalid token' });
+    }catch(error){
+        return response.status(401).json({ message: 'Invalid token' });
     }
 };
 
-const requireAdmin = (req, res, next) => {
-
-    if (!req.user || !['Admin', 'superadmin'].includes(req.user.role)) {
-        console.warn("Access denied")
-        return res.status(403).json({ message: 'Access denied: Admin rights required' });
+const authorizeRole = (roles) => {
+    return (request, response, next) => {
+        if(!roles.includes(request.user.role)){
+            return response.status(403).json( { message: "Access denied"});
+        }
+        next();
     }
-    next();
-};
+}
 
-module.exports = { authenticateUser, requireAdmin };
+const requireAdmin = authorizeRole(["admin"]);
+
+module.exports = { authenticateUser, requireAdmin, authorizeRole }

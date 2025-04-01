@@ -24,7 +24,7 @@ const getDailyAttendance = async (request, response) => {
         const selectedDate = new Date(date);
         selectedDate.setHours(0, 0, 0, 0);
 
-        const attedanceRecords = await Attendance.find({ date: selectedDate})
+        const attendanceRecords = await Attendance.find({ date: selectedDate})
             .populate("employee", "name email role");
 
         const allEmployees = await Employee.find({}, "name email role");
@@ -33,16 +33,23 @@ const getDailyAttendance = async (request, response) => {
         const checkedOut = [];
         const onBreak = [];
         const absent = [];
+        
 
-        const attendedEmployeeIds = new Set(attedanceRecords.map(record => record.employee._id.toString()));
+        const attendedEmployeeIds = new Set(attendanceRecords.map(record => record.employee._id.toString()));
 
-        attedanceRecords.forEach(record => {
+        attendanceRecords.forEach(record => {
             if(record.status === "Checked-In"){
                 checkedIn.push(record.employee);
             }else if(record.status === "Checked-Out"){
                 checkedOut.push(record.employee)
             }else if(record.status === "On Break"){
                 onBreak.push(record.employee);
+            }
+        });
+
+        allEmployees.forEach(employee => {
+            if(!attendedEmployeeIds.has(employee._id.toString())){
+                absent.push(employee);
             }
         });
 

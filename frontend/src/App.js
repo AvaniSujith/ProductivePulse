@@ -12,20 +12,69 @@
 
 // export default App; 
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Auth from "./pages/authPage"  // Import your Auth component
-import ForgotPassword from "./components/ForgotPassword";  // Forgot Password component (create if not exists)
-// import Dashboard from "./components/Dashboard";  // The main page after login
-import EmployeeDashboard from "./pages/EmployeeDashboard"; 
+// import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+// import { useContext } from "react";
+
+// import Auth from "./pages/AuthPage" 
+// import ForgotPassword from "./components/ForgotPassword";  
+// // import Dashboard from "./components/Dashboard"; 
+// import EmployeeDashboard from "./pages/EmployeeDashboard"; 
+// import AdminDashboard from "./pages/AdminDashboard";
+// import MarkLeave from "./pages/MarkLeave";
+// import AuthContext from "./context/AuthContext";
+// import EmployeeGreeting from "./pages/EmployeeGreeting";
+
+// function App() {
+
+//   const { user } = useContext(AuthContext);
+
+//   return (
+//     <Router>
+//       <Routes>
+
+//         <Route path="/" element={<Auth />} />  
+//         <Route path="/forgot-password" element={<ForgotPassword />} />  
+     
+//         <Route path="/dashboard" element={user?.role === "employee" ? <EmployeeDashboard /> : <Navigate to="/" />} /> 
+//         <Route path='/admin' element={user?.role === "admin" ? <AdminDashboard /> : <Navigate to="/" />} />
+//         <Route path="/mark-leave" element={<MarkLeave />} />
+//         <Route path="/greeting" element={user?.role === "employee" ? <EmployeeGreeting /> : <Navigate to="/" />}  />
+
+//       </Routes>
+//     </Router>
+//   );
+// }
+
+// export default App;
+
+
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { useContext } from "react";
+
+import Auth from "./pages/AuthPage";
+import ForgotPassword from "./components/ForgotPassword";
+import EmployeeDashboard from "./pages/EmployeeDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import MarkLeave from "./pages/MarkLeave";
+import AuthContext from "./context/AuthContext";
+import EmployeeGreeting from "./pages/EmployeeGreeting";
 
 function App() {
+  const { user, loading } = useContext(AuthContext) ||{}; 
+
+  if(loading){
+    return <div>loading..</div>
+  }
+
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Auth />} />  {/* Login & Signup Page */}
-        <Route path="/forgot-password" element={<ForgotPassword />} />  {/* Forgot Password Page */}
-        {/* <Route path="/dashboard" element={<Dashboard />} />  Protected Page after Login */}
-        <Route path="/dashboard" element={<EmployeeDashboard />} /> 
+        <Route path="/" element={<Auth />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/dashboard" element={user?.role === "employee" ? <EmployeeDashboard /> : <Navigate to="/" />} />
+        <Route path="/admin" element={user?.role === "admin" ? <AdminDashboard /> : <Navigate to="/" />} />
+        <Route path="/mark-leave" element={<MarkLeave />} />
+        <Route path="/greeting" element={user?.role === "employee" ? <EmployeeGreeting /> : <Navigate to="/" />} />
       </Routes>
     </Router>
   );
