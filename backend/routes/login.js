@@ -56,7 +56,9 @@
 
 
 const express = require("express");
-const User = require("../models/User");
+// const User = require("../models/User");
+const Admin = require('../models/Admin');
+const Employee = require('../models/Employee')
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const dotenv = require("dotenv");
@@ -66,13 +68,16 @@ const router = express.Router();
 
 router.post("/", async (request, response) => {
     try {
+        console.log("Recievded reques", request.body)
         const { email, password } = request.body;
 
         if (!email || !password) {
             return response.status(400).json({ message: "Email and password are required" });
         }
 
-        const user = await User.findOne({ email });
+        // const user = await User.findOne({ email });
+        const user = await Admin.findOne({ email }) || await Employee.findOne({ email });
+
         if (!user) {
             return response.status(401).json({ message: "Invalid credentials" });
         }
@@ -83,7 +88,7 @@ router.post("/", async (request, response) => {
         }
 
         const accessToken = jwt.sign(
-            { id: user._id, role: user.role },
+            { id: user._id, role: user.role.toLowerCase() },
             process.env.JWT_SECRET,
             { expiresIn: "15m" }
         );
@@ -95,7 +100,8 @@ router.post("/", async (request, response) => {
         );
 
         user.refreshToken = refreshToken;
-        await user.save();
+           // await user.save();
+        await user.save({ validateBeforeSave: false });
 
         response.cookie("refreshToken", refreshToken, {
             httpOnly: true,
@@ -106,6 +112,9 @@ router.post("/", async (request, response) => {
 
         response.status(200).json({ message: "Login successful", accessToken, role: user.role });
     } catch (error) {
+
+        console.error("login Error", error);
+
         response.status(500).json({ message: "Server error", error: error.message });
     }
 });

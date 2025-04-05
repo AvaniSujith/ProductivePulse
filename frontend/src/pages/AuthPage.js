@@ -351,7 +351,8 @@ const Auth = () => {
     const navigate = useNavigate();
     const [isSignUpView, setIsSignUpView] = useState(false); 
     const [credentials, setCredentials] = useState({
-        username: "",
+        firstName:"",
+        lastName:"",
         email: "",
         password: "",
         role: "employee"
@@ -371,30 +372,37 @@ const Auth = () => {
 
             // console.log("Starting login with: ", credentials);
 
-            const userData = await login({ 
-                email: credentials.email, 
-                password: credentials.password
-            });
+            // const userData = await login({ 
+            //     email: credentials.email,
+            //     password: credentials.password
+            // });
 
-            // // console.log("Recieved userData after Login: ", userData);
+            const userData = await login(credentials.email, credentials.password);
+
+            // console.log("Recieved userData after Login: ", userData);
             // // console.log("User role: ", userData?.user?.role);
             
-            if(userData?.user?.role === "admin") {
+            if(userData?.role === "admin") {
 
-                // console.log("Should navigate to /admin");
+            // console.log("Should navigate to /admin")
 
                 navigate("/admin");
 
-                // console.log("Navigation attempt completed");
+            // console.log("Navigation attempt completed");
 
             } else {
 
-                // console.log("Should navigate to /greeting");
+            // console.log("Should navigate to /greeting");
+            
+                console.log("Recieved userData", userData);
+                // console.log("extracted date", userData?.user?.role);
 
                 navigate("/greeting");
 
-                // console.log("Navigation attempt completed");
-            }
+                console.log("Navigation attempt completed"); 
+
+            } 
+
 
             // setTimeout(() => {
             //     if(userData?.user?.role === "admin"){
@@ -411,9 +419,10 @@ const Auth = () => {
             //     window.location.href = "/greeting"
             // }
 
-        } catch(err) {
-            console.error("Login error in component", error)
-            setError(err.message || "Sign in failed");
+        } catch(error) {
+            console.error("Login error in component", error);
+            setError(error.message || "Sign in failed");
+
         }
     };
 
@@ -423,7 +432,7 @@ const Auth = () => {
         try {
             const userData = await signup(credentials);
             
-            if(userData?.user?.role === "admin") {
+            if(userData?.role === "admin") {
                 navigate("/admin");
             } else {
                 navigate("/greeting");
@@ -473,13 +482,32 @@ const Auth = () => {
                     <div className="w-full h-full bg-white p-8 flex flex-col items-center justify-center">
                         <h2 className="text-3xl font-bold text-gray-700">Sign Up</h2>
                         {error && isSignUpView && <p className="text-red-500 text-sm">{error}</p>}
+                        <select
+                            name="role"
+                            className="w-full p-2 mt-3 border border-gray-300 rounded"
+                            onChange={handleChange}
+                            value={credentials.role}
+                        >
+
+                            <option value="employee">Employee</option>
+                            <option value="admin">Admin</option>
+
+                        </select>
                         <input 
-                            name="username" 
+                            name="firstName" 
                             type="text" 
-                            placeholder="Username" 
+                            placeholder="First name" 
                             className="w-full p-2 mt-3 border border-gray-300 rounded" 
                             onChange={handleChange}
-                            value={credentials.username}
+                            value={credentials.firstName}
+                        />
+                        <input 
+                            name="lastName"
+                            type="text"
+                            placeholder="Last Name"
+                            className="w-full p-2 mt-3 border border-gray-300 rounded"
+                            onChange={handleChange}
+                            value={credentials.lastName}
                         />
                         <input 
                             name="email" 

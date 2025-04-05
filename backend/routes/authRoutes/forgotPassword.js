@@ -29,7 +29,10 @@ router.post("/", async (req, res) => {
         // admin.resetPasswordExpires = Date.now() + 3600000;
 
         const resetToken = crypto.randomBytes(32).toString('hex');
-        user.resetPasswordToken = resetToken;
+        const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+        // user.resetPasswordToken = resetToken;
+        user.resetPasswordToken = hashedToken;
         user.resetPasswordExpires = Date.now() + 3600000;
 
         // await admin.save();

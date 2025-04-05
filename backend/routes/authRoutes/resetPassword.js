@@ -1,5 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const Admin = require('../../models/Admin');
 const Employee = require('../../models/Employee');
 
@@ -18,13 +19,16 @@ router.post('/:token', async (req, res) => {
         if(newPassword !== confirmPassword){
             return res.status(400).json({ message: 'Passwords do not match' })
         }
+        
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
         // const admin = await Admin.findOne({
         //     resetPasswordToken: token,
         //     resetPasswordExpires: { $gt: Date.now() }
         // });
 
-        const user = await Admin.findOne({ resetPasswordToken: token, resetPasswordExpires: { $gt: Date.now() }}) || 
-                     await Employee.findOne({ resetPasswordToken: token, resetPasswordExpires: { $gt: Date.now() }})
+        const user = await Admin.findOne({ resetPasswordToken: hashedToken, resetPasswordExpires: { $gt: Date.now() }}) || 
+                     await Employee.findOne({ resetPasswordToken: hashedToken, resetPasswordExpires: { $gt: Date.now() }});
     
         // if(!admin){
         //     return res.status(400).json({ message: 'Invalid or expired token' });
@@ -34,10 +38,10 @@ router.post('/:token', async (req, res) => {
             return res.status(400).json({ message: 'Invalid or expired token' });
         }
 
-        console.log("New password before hashing:", newPassword);
-        user.password = await bcrypt.hash(newPassword, 10);
-        console.log("New hashed password:", user.password);
 
+        // console.log("New password before hashing:", newPassword);
+        user.password = await bcrypt.hash(newPassword, 10);
+        // console.log("New hashed password:", user.password);
 
         user.resetPasswordToken = null;
         user.resetPasswordExpires = null;
@@ -51,4 +55,4 @@ router.post('/:token', async (req, res) => {
     }
 });
 
-module.exports = router;
+module.exports = router; 

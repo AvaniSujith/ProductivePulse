@@ -60,7 +60,8 @@ import AuthContext from "./context/AuthContext";
 import EmployeeGreeting from "./pages/EmployeeGreeting";
 
 function App() {
-  const { user, loading } = useContext(AuthContext) ||{}; 
+  const { user, loading } = useContext( AuthContext ) ||{}; 
+  const userRole = user?.role || localStorage.getItem("userRole");
 
   if(loading){
     return <div>loading..</div>
@@ -71,10 +72,11 @@ function App() {
       <Routes>
         <Route path="/" element={<Auth />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/dashboard" element={user?.role === "employee" ? <EmployeeDashboard /> : <Navigate to="/" />} />
-        <Route path="/admin" element={user?.role === "admin" ? <AdminDashboard /> : <Navigate to="/" />} />
+        <Route path="/dashboard" element={userRole?.toLowerCase() === "employee" ? <EmployeeDashboard /> : <Navigate to="/" />} />
+        <Route path="/admin" element={userRole?.toLowerCase() === "admin" ? <AdminDashboard /> : <Navigate to="/" />} />
+        <Route path="/greeting" element={userRole?.toLowerCase() === "employee" ? <EmployeeGreeting /> : <Navigate to="/" />} />
         <Route path="/mark-leave" element={<MarkLeave />} />
-        <Route path="/greeting" element={user?.role === "employee" ? <EmployeeGreeting /> : <Navigate to="/" />} />
+        {/* <Route path="/greeting" element={userRole?.toLowerCase() === "employee" ? <EmployeeGreeting /> : <Navigate to="/" />} /> */}
       </Routes>
     </Router>
   );

@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const User = require("../models/User");
+// const User = require("../models/User");
+const Admin = require('../models/Admin');
+const Employee = require('../models/Employee');
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -14,7 +16,8 @@ router.post('/refresh', async (request,response) => {
             return response.status(401).json({ message: 'Refresh token missing' });
         }
 
-        const user = await User.findOne({ refreshToken });
+        // const user = await User.findOne({ refreshToken });
+        const user = await Admin.findOne({ refreshToken }) || await Employee.findOne({ refreshToken })
         if(!user){
             return response.status(403).json({ message: "Invalid refresh token" });
         }
@@ -24,7 +27,9 @@ router.post('/refresh', async (request,response) => {
             return response.status(403).json({ message: 'Invalid or expired refresh token' });
         }
     
-        const newAccessToken = generateAccessToken({ _id: decoded.id, role: decoded.role });
+        // const newAccessToken = generateAccessToken({ _id: decoded.id, role: decoded.role });
+
+        const newAccessToken = generateAccessToken({ _id: decoded.id, role: user.role.toLowerCase() })
         // return response.json({ accessToken: newAccessToken })
 
         return response.json({

@@ -57,14 +57,13 @@
 // export default AuthProvider;
 
 
-
-
 import React, { createContext, useState, useEffect } from "react";
+// import { useNavigate } from "react-router-dom";
 import axios from "axios";
+// import { jwtDecode } from "jwt-decode"; // Uncomment if decoding the token
 
 // Set the base URL for your API
-// Change this to where your backend is actually running
-const API_BASE_URL = "http://localhost:5000"; // Assuming your backend is on port 5000
+const API_BASE_URL = "http://localhost:5000"; 
 
 // Create axios instance with the base URL
 const api = axios.create({
@@ -91,70 +90,109 @@ export const AuthProvider = ({ children }) => {
   // Basic authentication check on mount
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    if (token) {
-      // Add token to headers for all requests
-      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      // Just set a basic user object for now
-      setUser({ role: "employee" }); // You might want to decode the token instead
+    let storedUser = localStorage.getItem("user");
+  
+    // Ensure storedUser is valid before parsing
+    if (token && storedUser && storedUser !== "undefined") {
+      try {
+        api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error("Error parsing user from localStorage:", error);
+        localStorage.removeItem("user");
+        setUser(null);
+      }
+    } else {
+      setUser(null);
     }
+  
     setLoading(false);
   }, []);
+  
+  // Login function 
+  const login = async (email, password) => {
 
-  // Login function
-  const login = async (credentials) => {
-    try {
-      const response = await api.post("/api/login", credentials);
-      
-      // Store token
-      localStorage.setItem("accessToken", response.data.accessToken);
-      
-      // Set authorization header for future requests
-      api.defaults.headers.common["Authorization"] = `Bearer ${response.data.accessToken}`;
-      
-      // Set user
-      const userData = { role: response.data.role };
-      setUser(userData);
-      
-      return { user: userData };
-    } catch (error) {
-      console.error("Login error:", error);
-      throw new Error(error.response?.data?.message || "Login failed");
-    }
+    console.log("attempting", email, password)
+    // try {
+    //   const response = await api.post("/api/login", credentials);
+    //   const { token, user } = response.data; 
+
+    //   // Store token and user data
+    //   localStorage.setItem("accessToken", token);
+    //   localStorage.setItem("user", JSON.stringify(user));
+
+    //   // Set authorization header for future requests
+    //   api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+    //   setUser(user);
+    //   return user;
+
+    // } catch (error) {
+    //   console.error("Login error:", error);
+    //   throw new Error(error.response?.data?.message || "Login failed");
+    // }
+
+    // const navigate = useNavigate();
+    const response = await api.post('/api/login', { email,password }, { withCredentials: true });
+    // console.log("Login :", response.data)
+    const { accessToken, role } = response.data;
+    const returnedUser = { role: role.toLowerCase(), email };
+
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('user', JSON.stringify(returnedUser));
+    localStorage.setItem("userRole", role);
+
+    api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+    setUser(returnedUser);
+    return returnedUser;
   };
 
   // Signup function
-  const signup = async (userData) => {
+  const signup = async (credentials) => {
+    console.log("Sign in",
+      credentials
+    )
     try {
-      const response = await api.post("/api/signup", userData);
-      
-      // Store token
-      localStorage.setItem("accessToken", response.data.token);
-      
+      const response = await api.post("/api/signup", credentials);
+      const { token, user: returnedUser } = response.data;
+
+      // Store token and user data
+      localStorage.setItem("accessToken", token);
+      localStorage.setItem("user", JSON.stringify(returnedUser));
+      localStorage.setItem("userRole", returnedUser.role.toLowerCase());
+
       // Set authorization header for future requests
-      api.defaults.headers.common["Authorization"] = `Bearer ${response.data.token}`;
-      
-      // Set user
-      const user = { role: userData.role };
-      setUser(user);
-      
-      return { user };
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      setUser(returnedUser); 
+
+      return returnedUser; 
+
     } catch (error) {
+
+    
       console.error("Signup error:", error);
-      throw new Error(error.response?.data?.message || "Signup failed");
+      throw new Error(error.response?.data?.message || "Signup failed"); 
+
     }
   };
 
   // Logout function
   const logout = () => {
     localStorage.removeItem("accessToken");
+    localStorage.removeItem("user");
+    localStorage.removeItem("userRole");
     delete api.defaults.headers.common["Authorization"];
     setUser(null);
-  };
 
+    // delete api.defaults.headers.common["Authorization"];
+    // setUser(null);
+
+  };
+  
   return (
     <AuthContext.Provider
       value={{
-        user,
+        user,  
         loading,
         login,
         signup,
@@ -164,5 +202,5 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-  
-}; 
+};
+ 

@@ -20,9 +20,15 @@ const generateToken = (user) => {
 
 
 const generateRefreshToken = (user) => {
-    return jwt.sign({ id: user._id },
-        process.env.REFRESH_SECRET,
-        { expiresIn: '7d' }
+    // return jwt.sign({ id: user._id },
+    //     process.env.REFRESH_SECRET,
+    //     { expiresIn: '7d' }
+    // );
+
+    return jwt.sign(
+        { id: user._id, role: user.role.toLowerCase() },
+        process.env.JWT_SECRET,
+        { expiresIn: '15m' }
     );
 };
 
